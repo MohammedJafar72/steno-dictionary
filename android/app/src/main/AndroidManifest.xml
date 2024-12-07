@@ -13,7 +13,7 @@
         android:minSdkVersion="21"/>
 
     <application
-        android:label="steno_dictionary"
+        android:label="Steno Dictionary"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
