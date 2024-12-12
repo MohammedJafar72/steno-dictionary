@@ -25,8 +25,9 @@ class DatabaseHelper {
   }
 
   Future<bool?> saveImage(context, capturedImagePath, txtEditingController) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final imageStoringPath = "${directory.parent.path}/images";
+    // final directory = await getApplicationDocumentsDirectory();
+    // final imageStoringPath = "${directory.parent.path}/images";
+    final String imageStoringPath = await getImagesStoragePath();
     final File imageFilePath = File(capturedImagePath!);
     MutableBool dbOpResult = MutableBool(false);
 
@@ -60,7 +61,7 @@ class DatabaseHelper {
 
       dbOpResult.value = true;
     } catch (e) {
-      dbOpResult.value = false; 
+      dbOpResult.value = false;
       showSnackBar(context, "Data is not saved in Database. \n $e");
     }
   }

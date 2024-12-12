@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 void showSnackBar(BuildContext context, String? text) {
@@ -85,7 +86,11 @@ Future<bool> requestStoragePermission() async {
 
 Future<String> getImagesStoragePath() async {
   try {
-    String imagesStoragePath = '';
-  } catch (e) {}
-  return 'a';
+    final directory = await getApplicationDocumentsDirectory();
+    final imageStoringPath = "${directory.parent.path}/images";
+
+    return imageStoringPath;
+  } catch (e) {
+    return 'Image storage path not found \n $e';
+  }
 }

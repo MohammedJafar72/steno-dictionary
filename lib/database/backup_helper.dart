@@ -1,9 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:steno_dictionary/common_methods.dart';
 import 'package:steno_dictionary/database/database_helper.dart';
+
+class MutableBool {
+  bool value;
+  MutableBool(this.value);
+}
 
 class BackupHelper {
   static final BackupHelper backupHelperInstance = BackupHelper._privateConstructor();
@@ -11,7 +15,9 @@ class BackupHelper {
 
   final dbHelper = DatabaseHelper.instance;
 
-  Future<String> backupData(context) async {
+  Future<String> backupHiveData(context) async {
+    MutableBool dbOpResult = MutableBool(false);
+
     try {
       bool hasPermissions = await requestStoragePermission();
       if (!hasPermissions) {
@@ -41,19 +47,38 @@ class BackupHelper {
       final File jsonFile = File('$selectedDirectory/Data_Backup.json');
       await jsonFile.writeAsString(jsonEncode(jsonString));
 
-      // Copy all images to the selected directory
-      // for (final entry in hiveData.values) {
-      //   final String? imagePath = entry['imagePath'];
-      //   if (imagePath != null && File(imagePath).existsSync()) {
-      //     final File imageFile = File(imagePath);
-      //     final String imageName = imageFile.uri.pathSegments.last;
-      //     await imageFile.copy('$selectedDirectory/$imageName');
-      //   }
-      // }
+      // backup images
+      await backupImages(selectedDirectory, dbOpResult);
 
-      return 'Backup Done successfully';
+      if (dbOpResult.value == true) {
+        return 'Backup Done successfully';
+      } else {
+        return 'Images didn\'t got backed-up';
+      }
     } catch (e) {
       return 'Backup failed due to some reason \n $e';
+    }
+  }
+
+  Future<bool> backupImages(String selectedDirectory, MutableBool dbOpResult) async {
+    try {
+      final String imageStoragePath = await getImagesStoragePath();
+      final Directory imagesDirectory = Directory(imageStoragePath);
+      if (!imagesDirectory.existsSync()) {
+        return dbOpResult.value = false;
+      }
+
+      final List<FileSystemEntity> imageFiles = imagesDirectory.listSync();
+      for (final file in imageFiles) {
+        if (file is File) {
+          final String imageName = file.uri.pathSegments.last;
+          await file.copy('$selectedDirectory/$imageName');
+        }
+      }
+
+      return dbOpResult.value = true;
+    } catch (e) {
+      return dbOpResult.value = false;
     }
   }
 }

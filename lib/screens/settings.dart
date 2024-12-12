@@ -21,7 +21,7 @@ class _SettingsPageState extends State<SettingsPage> {
         'title': 'Backup Data',
         'onTap': () async {
           setState(() => _isLoading = true);
-          String isBackupDone = await BackupHelper.backupHelperInstance.backupData(context);
+          String isBackupDone = await BackupHelper.backupHelperInstance.backupHiveData(context);
           setState(() => _isLoading = false);
           showSnackBar(context, isBackupDone);
         }
