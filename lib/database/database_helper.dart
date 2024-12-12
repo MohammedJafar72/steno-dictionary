@@ -60,7 +60,7 @@ class DatabaseHelper {
 
       dbOpResult.value = true;
     } catch (e) {
-      dbOpResult.value = false; // Indicate failure
+      dbOpResult.value = false; 
       showSnackBar(context, "Data is not saved in Database. \n $e");
     }
   }
@@ -69,11 +69,11 @@ class DatabaseHelper {
     await sdData.clear();
   }
 
-  dynamic getAllData(BuildContext context) {
+  Map<dynamic, dynamic> getAllData(BuildContext context) {
     openBox();
     if (_box == null) {
       showSnackBar(context, "Unable to access data.");
     }
-    return _box!.values.toList();
+    return _box!.toMap();
   }
 }

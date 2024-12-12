@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 void showSnackBar(BuildContext context, String? text) {
-  text =
-      text != '' ? text : "No picture found. Try capturing one using camera.";
+  text = text != '' ? text : "No picture found. Try capturing one using camera.";
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(text!),
@@ -70,13 +69,23 @@ Future<bool?> showConfirmationDialog(BuildContext context) {
 
 Future<Object?> openCamera(BuildContext context) async {
   // Navigate to the camera screen
-  final capturedImagePath =
-  await Navigator.pushNamed(context, '/takePicture');
+  final capturedImagePath = await Navigator.pushNamed(context, '/takePicture');
 
   return capturedImagePath;
 }
 
 Future<bool> requestStoragePermission() async {
-  PermissionStatus status = await Permission.storage.request();
-  return status.isGranted;
+  if (await Permission.manageExternalStorage.isGranted) {
+    return true;
+  } else {
+    await Permission.manageExternalStorage.request();
+    return await Permission.manageExternalStorage.isGranted;
+  }
+}
+
+Future<String> getImagesStoragePath() async {
+  try {
+    String imagesStoragePath = '';
+  } catch (e) {}
+  return 'a';
 }

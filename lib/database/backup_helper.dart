@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:steno_dictionary/common_methods.dart';
 import 'package:steno_dictionary/database/database_helper.dart';
 
 class BackupHelper {
@@ -12,20 +13,33 @@ class BackupHelper {
 
   Future<String> backupData(context) async {
     try {
+      bool hasPermissions = await requestStoragePermission();
+      if (!hasPermissions) {
+        return "Storage permission denied";
+      }
+
+      // open directory selector
       String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
       if (selectedDirectory == null) {
         return "Please select a directory to backup";
       }
-      await dbHelper.openBox();
-      final dynamic hiveData = dbHelper.getAllData(context);
-      if (hiveData == null || hiveData.isEmpty) {
-        return "No data available to backup.";
-      }
-      // Convert the list of data to a JSON string
-      final String jsonString = jsonEncode(hiveData);
 
-      final File jsonFile = File('$selectedDirectory/data backup.json');
-      await jsonFile.writeAsString(jsonString);
+      // get all data and Convert the list of data to a JSON string
+      await dbHelper.openBox();
+      final Map<dynamic, dynamic> hiveData = dbHelper.getAllData(context);
+      if (hiveData.isEmpty) {
+        return "No data available to backup";
+      }
+      //final String jsonString = jsonEncode(hiveData);
+      final jsonString = jsonEncode(hiveData.map((key, value) => MapEntry(
+            key.toString(),
+            {
+              "text": value['text'],
+              "imagePath": value['imagePath'],
+            },
+          )));
+      final File jsonFile = File('$selectedDirectory/Data_Backup.json');
+      await jsonFile.writeAsString(jsonEncode(jsonString));
 
       // Copy all images to the selected directory
       // for (final entry in hiveData.values) {
@@ -39,7 +53,7 @@ class BackupHelper {
 
       return 'Backup Done successfully';
     } catch (e) {
-      return 'Backup failed due to some reason';
+      return 'Backup failed due to some reason \n $e';
     }
   }
 }
