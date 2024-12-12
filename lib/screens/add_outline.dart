@@ -158,19 +158,11 @@ class _AddOutlineState extends State<AddOutline> {
             SdElevatedButton(
               onPressed: _isButtonEnabled
                   ? () async {
-                      var result = await saveImage(context, _capturedImagePath, _txtController);
+                      var result = await DatabaseHelper.instance.saveImage(context, _capturedImagePath, _txtController);
+
                       if (result == true) {
                         showSnackBar(context, "Data saved successfully in the box.");
-                        // final Box sdDataBox = Hive.box('sdData');
-                        // var entries = sdDataBox.values.toList();
-
-                        // if (entries.isNotEmpty) {
-                        //   for (var entry in entries) {
-                        //     print('Text: ${entry['text']}, Image Path: ${entry['imagePath']} \n');
-                        //   }
-                        // } else {
-                        //   print('No entries found in sdData box.');
-                        // }
+                        Navigator.pop(context);
                       }
                     }
                   : null,

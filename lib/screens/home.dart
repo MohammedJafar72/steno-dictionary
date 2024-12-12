@@ -21,6 +21,12 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // appBar: AppBar(
+      //   title: Text(''),
+      //   actions: [
+      //     IconButton(onPressed: () => Navigator.pushNamed(context, '/openSettings'), icon: const Icon(Icons.settings_rounded))
+      //   ],
+      // ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.blueAccent,
         onPressed: () => Navigator.pushNamed(context, '/addOutline'),
@@ -31,19 +37,29 @@ class _HomeState extends State<Home> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(20),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[800],
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: SdTextField(
-                  controller: txtController,
-                  hintText: 'Search for outline...',
-                  suffixIcon: const Icon(Icons.sort_by_alpha_outlined, color: Colors.white),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                  prefixIcon: const Icon(Icons.search, color: Colors.white54),
-                ),
+              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 5),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey[800],
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: SdTextField(
+                        controller: txtController,
+                        hintText: 'Search for outline...',
+                        suffixIcon: const Icon(Icons.sort_by_alpha_outlined, color: Colors.white),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        prefixIcon: const Icon(Icons.search, color: Colors.white54),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pushNamed(context, '/openSettings'),
+                    icon: const Icon(Icons.settings_rounded, size: 30),
+                  )
+                ],
               ),
             ),
             Expanded(child: _buildValueListenableBuilder()),

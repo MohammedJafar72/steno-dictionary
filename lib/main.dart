@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:steno_dictionary/screens/home.dart';
 import 'package:steno_dictionary/screens/add_outline.dart';
+import 'package:steno_dictionary/screens/settings.dart';
 import 'package:steno_dictionary/screens/take_picture.dart';
 import 'package:steno_dictionary/screens/view_outline.dart';
 
@@ -30,6 +31,7 @@ class MyApp extends StatelessWidget {
         '/addOutline': (context) => const AddOutline(),
         '/viewOutline': (context) => const ViewOutline(),
         '/takePicture': (context) => const TakePicture(),
+        '/openSettings': (context) => const SettingsPage(),
       },
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 void showSnackBar(BuildContext context, String? text) {
   text =
@@ -73,4 +74,9 @@ Future<Object?> openCamera(BuildContext context) async {
   await Navigator.pushNamed(context, '/takePicture');
 
   return capturedImagePath;
+}
+
+Future<bool> requestStoragePermission() async {
+  PermissionStatus status = await Permission.storage.request();
+  return status.isGranted;
 }
