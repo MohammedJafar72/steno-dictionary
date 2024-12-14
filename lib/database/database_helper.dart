@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:hive/hive.dart';
-import 'package:path_provider/path_provider.dart';
 import '../common_methods.dart';
 
 // Wrapper class for mutable reference
@@ -64,10 +63,6 @@ class DatabaseHelper {
       dbOpResult.value = false;
       showSnackBar(context, "Data is not saved in Database. \n $e");
     }
-  }
-
-  Future<void> deleteAllData(Box sdData) async {
-    await sdData.clear();
   }
 
   Map<dynamic, dynamic> getAllData(BuildContext context) {

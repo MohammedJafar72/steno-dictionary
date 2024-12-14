@@ -36,7 +36,7 @@ class BackupHelper {
       if (hiveData.isEmpty) {
         return "No data available to backup";
       }
-      //final String jsonString = jsonEncode(hiveData);
+
       final jsonString = jsonEncode(hiveData.map((key, value) => MapEntry(
             key.toString(),
             {
@@ -44,8 +44,12 @@ class BackupHelper {
               "imagePath": value['imagePath'],
             },
           )));
-      final File jsonFile = File('$selectedDirectory/Data_Backup.json');
-      await jsonFile.writeAsString(jsonEncode(jsonString));
+      final File jsonFile = File('$selectedDirectory/Data_Backup.txt');
+      if (await jsonFile.exists()) {
+        await jsonFile.writeAsString(jsonString, mode: FileMode.append);
+      } else {
+        await jsonFile.writeAsString(jsonEncode(jsonString));
+      }
 
       // backup images
       await backupImages(selectedDirectory, dbOpResult);
@@ -53,10 +57,10 @@ class BackupHelper {
       if (dbOpResult.value == true) {
         return 'Backup Done successfully';
       } else {
-        return 'Images didn\'t got backed-up';
+        return 'Images didn\'t got backed up';
       }
     } catch (e) {
-      return 'Backup failed due to some reason \n $e';
+      return 'Backup failed due to this reason \n $e';
     }
   }
 

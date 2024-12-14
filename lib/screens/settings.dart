@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:steno_dictionary/common_methods.dart';
 import 'package:steno_dictionary/database/backup_helper.dart';
+import 'package:steno_dictionary/database/restore_helper.dart';
+import 'package:steno_dictionary/reusable_widgets/okbtn_dialogue.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -20,16 +22,89 @@ class _SettingsPageState extends State<SettingsPage> {
         'icon': Icons.backup_rounded,
         'title': 'Backup Data',
         'onTap': () async {
-          setState(() => _isLoading = true);
-          String isBackupDone = await BackupHelper.backupHelperInstance.backupHiveData(context);
-          setState(() => _isLoading = false);
-          showSnackBar(context, isBackupDone);
+          bool isOkPressed = false;
+
+          await showOkDialog(
+            context: context,
+            message: 'Simply go to the folder where you want to save your data.',
+            title: 'Backup Data',
+            onOkPressed: () {
+              isOkPressed = true;
+            },
+            onCancelPressed: () {
+              isOkPressed = false;
+            },
+          );
+
+          if (isOkPressed) {
+            setState(() => _isLoading = true);
+            String isBackupDone = await BackupHelper.backupHelperInstance.backupHiveData(context);
+            setState(() => _isLoading = false);
+            showSnackBar(context, isBackupDone);
+          } else {
+            // Handle the Cancel action if needed
+            showSnackBar(context, 'Backup canceled.');
+          }
         }
       },
       {
         'icon': Icons.restore_rounded,
         'title': 'Restore Data',
-        'onTap': null,
+        'onTap': () async {
+          bool isOkPressed = false;
+
+          await showOkDialog(
+            context: context,
+            message: 'Simply go to the folder where you saved your backup data earlier.',
+            title: 'Restore Data',
+            onOkPressed: () {
+              isOkPressed = true;
+            },
+            onCancelPressed: () {
+              isOkPressed = false;
+            },
+          );
+
+          if (isOkPressed) {
+            setState(() => _isLoading = true);
+            String isRestoreDone = await RestoreHelper.backupHelperInstance.restoreHiveData(context);
+            setState(() => _isLoading = false);
+            showSnackBar(context, isRestoreDone);
+          } else {
+            // Handle the Cancel action if needed
+            showSnackBar(context, 'Restoration canceled.');
+          }
+        },
+      },
+      {
+        'icon': Icons.delete_outline_rounded,
+        'title': 'Delete Data',
+        //'onTap': null,
+        'onTap': () async {
+          bool isOkPressed = false;
+
+          setState(() => _isLoading = true);
+          await showOkDialog(
+            context: context,
+            message: 'Are you sure? Data added by you will get deleted completely. Make sure to take backup.',
+            title: 'Delete All Data',
+            onOkPressed: () {
+              isOkPressed = true;
+            },
+            onCancelPressed: () {
+              isOkPressed = false;
+            },
+          );
+
+          if (isOkPressed) {
+            setState(() => _isLoading = true);
+
+            showSnackBar(context, 'App data is deleted successfully');
+            setState(() => _isLoading = false);
+          } else {
+            showSnackBar(context, 'Delete canceled.');
+          }
+        },
       },
     ];
 
