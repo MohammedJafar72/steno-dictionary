@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -88,6 +90,7 @@ Future<String> getImagesStoragePath() async {
   try {
     final directory = await getApplicationDocumentsDirectory();
     final imageStoringPath = "${directory.parent.path}/images";
+    await Directory(imageStoringPath).create(recursive: true);
 
     return imageStoringPath;
   } catch (e) {

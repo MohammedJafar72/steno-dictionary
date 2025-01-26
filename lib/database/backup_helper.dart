@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
 import 'package:steno_dictionary/common_methods.dart';
 import 'package:steno_dictionary/database/database_helper.dart';
 
@@ -15,52 +16,77 @@ class BackupHelper {
 
   final dbHelper = DatabaseHelper.instance;
 
-  Future<String> backupHiveData(context) async {
+  Future<String> backupHiveData(BuildContext context) async {
     MutableBool dbOpResult = MutableBool(false);
 
     try {
+      // Request storage permission
       bool hasPermissions = await requestStoragePermission();
       if (!hasPermissions) {
         return "Storage permission denied";
       }
 
-      // open directory selector
+      // Open directory selector
       String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
       if (selectedDirectory == null) {
         return "Please select a directory to backup";
       }
 
-      // get all data and Convert the list of data to a JSON string
+      // Get all data from Hive
       await dbHelper.openBox();
       final Map<dynamic, dynamic> hiveData = dbHelper.getAllData(context);
       if (hiveData.isEmpty) {
         return "No data available to backup";
       }
 
-      final jsonString = jsonEncode(hiveData.map((key, value) => MapEntry(
-            key.toString(),
-            {
-              "text": value['text'],
-              "imagePath": value['imagePath'],
-            },
-          )));
-      final File jsonFile = File('$selectedDirectory/Data_Backup.txt');
+      // Prepare Hive data for JSON serialization
+      final Map<String, dynamic> newData = hiveData.map((key, value) => MapEntry(
+        key.toString(),
+        {
+          "text": value['text'],
+          "imagePath": value['imagePath'],
+        },
+      ));
+
+      // Define the backup file path
+      final String backupFilePath = '$selectedDirectory/Data_Backup.json';
+      final File jsonFile = File(backupFilePath);
+
+      // Handle existing file
+      Map<String, dynamic> mergedData = {};
+
       if (await jsonFile.exists()) {
-        await jsonFile.writeAsString(jsonString, mode: FileMode.append);
-      } else {
-        await jsonFile.writeAsString(jsonEncode(jsonString));
+        final String existingContent = await jsonFile.readAsString();
+        if (existingContent.isNotEmpty) {
+          try {
+            // Parse the existing content
+            final Map<String, dynamic> existingData = jsonDecode(existingContent) as Map<String, dynamic>;
+            mergedData = {...existingData};
+          } catch (e) {
+            // If the file contains invalid JSON, overwrite it
+            print("Invalid JSON in backup file. Overwriting...");
+          }
+        }
       }
 
-      // backup images
-      await backupImages(selectedDirectory, dbOpResult);
+      // Merge new data into the existing data
+      newData.forEach((key, value) {
+        mergedData[key] = value; // Add or overwrite
+      });
 
-      if (dbOpResult.value == true) {
-        return 'Backup Done successfully';
+      // Write merged data back to the file
+      await jsonFile.writeAsString(jsonEncode(mergedData));
+
+      // Backup images
+      bool result = await backupImages(selectedDirectory, dbOpResult);
+
+      if (result) {
+        return 'Backup completed successfully.';
       } else {
-        return 'Images didn\'t got backed up';
+        return 'Data backup partially completed.';
       }
     } catch (e) {
-      return 'Backup failed due to this reason \n $e';
+      return 'Backup failed due to this reason: \n $e';
     }
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:steno_dictionary/common_methods.dart';
 import 'package:steno_dictionary/database/backup_helper.dart';
+import 'package:steno_dictionary/database/deletion_helper.dart';
 import 'package:steno_dictionary/database/restore_helper.dart';
 import 'package:steno_dictionary/reusable_widgets/okbtn_dialogue.dart';
 
@@ -83,7 +84,6 @@ class _SettingsPageState extends State<SettingsPage> {
         'onTap': () async {
           bool isOkPressed = false;
 
-          setState(() => _isLoading = true);
           await showOkDialog(
             context: context,
             message: 'Are you sure? Data added by you will get deleted completely. Make sure to take backup.',
@@ -98,11 +98,11 @@ class _SettingsPageState extends State<SettingsPage> {
 
           if (isOkPressed) {
             setState(() => _isLoading = true);
-
-            showSnackBar(context, 'App data is deleted successfully');
+            String isDeleted = await DeletionHelper.deletionHelperInstance.deleteAllData();
+            showSnackBar(context, isDeleted);
             setState(() => _isLoading = false);
           } else {
-            showSnackBar(context, 'Delete canceled.');
+            showSnackBar(context, 'Delete canceled');
           }
         },
       },

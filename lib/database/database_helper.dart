@@ -31,7 +31,7 @@ class DatabaseHelper {
     MutableBool dbOpResult = MutableBool(false);
 
     try {
-      await Directory(imageStoringPath).create(recursive: true);
+      
       final String newImagePath = '$imageStoringPath/${txtEditingController.text}.png';
       await imageFilePath.copy(newImagePath);
 
@@ -53,8 +53,18 @@ class DatabaseHelper {
   ) async {
     try {
       final Box dataBox = Hive.box('sdData');
+      final String newText = txtEditingController.text;
+
+      // Check for duplicates
+      final bool isDuplicate = await isTextAlreadyInBox(newText);
+
+      if (isDuplicate) {
+        showSnackBar(context, "This text already exists in the dictionary");
+        return;
+      }
+
       await dataBox.add({
-        'text': txtEditingController.text,
+        'text': newText,
         'imagePath': newImagePath,
       });
 
@@ -72,4 +82,39 @@ class DatabaseHelper {
     }
     return _box!.toMap();
   }
+
+  Future<String> clearBox() async {
+    try {
+      // check that the _box variable has data inside it or not
+      if (_box == null) await openBox();
+
+      // check that the box has entries or not?
+      if (_box!.isEmpty) {
+        return 'There is no data present';
+      }
+
+      await _box!.clear();
+      return 'Data deleted successfully';
+    } catch (e) {
+      return 'There was a problem while deleting your data';
+    }
+  }
+
+  /// Checks if a given text already exists in the Hive box.
+  ///
+  /// Returns `true` if the text exists, `false` otherwise.
+  Future<bool> isTextAlreadyInBox(String textToCheck) async {
+    try {
+      final Box dataBox = Hive.box('sdData');
+      // Check if any entry in the box has the same 'text'
+      return dataBox.values
+          .whereType<Map<String, dynamic>>()
+          .any((entry) => entry['text'] == textToCheck);
+    } catch (e) {
+      // Handle errors gracefully
+      print("Error while checking for duplicate text: $e");
+      return false;
+    }
+  }
+
 }

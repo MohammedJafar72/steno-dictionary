@@ -100,7 +100,14 @@ class _HomeState extends State<Home> {
                   //   onPressed: () {},
                   // ),
                   onTap: () {
-                    Navigator.pushNamed(context, '/viewOutline');
+                    Navigator.pushNamed(
+                      context,
+                      '/viewOutline',
+                      arguments: {
+                        'imgPath': entry['imagePath'],
+                        'text': entry['text'],
+                      },
+                    );
                   },
                 ),
               ),
