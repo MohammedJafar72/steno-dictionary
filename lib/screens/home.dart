@@ -1,5 +1,10 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:steno_dictionary/reusable_widgets/okbtn_dialogue.dart';
 import 'package:steno_dictionary/reusable_widgets/sd_textfield.dart';
 
 class Home extends StatefulWidget {
@@ -10,23 +15,22 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  final TextEditingController txtController = TextEditingController();
+  String searchQuery = ''; // Track the current search query
+
   @override
   void initState() {
     super.initState();
-    // code to fetch data from db. list of english words
+    txtController.addListener(() {
+      setState(() {
+        searchQuery = txtController.text.trim().toLowerCase();
+      });
+    });
   }
-
-  final TextEditingController txtController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   title: Text(''),
-      //   actions: [
-      //     IconButton(onPressed: () => Navigator.pushNamed(context, '/openSettings'), icon: const Icon(Icons.settings_rounded))
-      //   ],
-      // ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.blueAccent,
         onPressed: () => Navigator.pushNamed(context, '/addOutline'),
@@ -73,32 +77,36 @@ class _HomeState extends State<Home> {
     return ValueListenableBuilder<Box>(
       valueListenable: Hive.box('sdData').listenable(),
       builder: (context, sdData, _) {
-        // Dynamically update dataCount based on box data
         if (sdData.isEmpty) {
-          return Center(child: _noDataFoundContainer);
+          return Center(child: _noDataFoundContainer(true));
         }
 
-        final entries = sdData.values.toList(); // Fetch all data from the box
+        final entries = sdData.values.toList();
+        // Filter entries based on the search query
+        final filteredEntries = entries.where((entry) => (entry['text'] ?? '').toString().toLowerCase().contains(searchQuery)).toList();
+
+        if (filteredEntries.isEmpty) {
+          return Center(child: _noDataFoundContainer(false));
+        }
 
         return ListView.builder(
-          itemCount: entries.length,
+          itemCount: filteredEntries.length,
           itemBuilder: (context, index) {
-            final entry = entries[index];
+            final entry = filteredEntries[index];
             return Padding(
               padding: const EdgeInsets.all(4.0),
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white10,
-                  // Background color for each tile
                   borderRadius: BorderRadius.circular(5),
                 ),
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 6.0),
                   title: Text(entry['text'] ?? 'No Title'),
-                  // trailing: IconButton(
-                  //   icon: const Icon(Icons.delete, color: Colors.red),
-                  //   onPressed: () {},
-                  // ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_forever_rounded, color: Colors.red),
+                    onPressed: () => _confirmAndDeleteEntry(entry, context),
+                  ),
                   onTap: () {
                     Navigator.pushNamed(
                       context,
@@ -120,90 +128,150 @@ class _HomeState extends State<Home> {
 }
 
 /// Widget blocks
-Column _noDataFoundContainer = Column(
-  mainAxisAlignment: MainAxisAlignment.center,
-  children: [
-    Opacity(opacity: 0.5, child: Image.asset('assets/images/no-data-found-white.png', height: 90)),
-    const SizedBox(height: 8),
-    const Opacity(
-      opacity: 0.5,
-      child: Text(
-        'Try adding some data by clicking on the \'plus\' icon below.',
-        style: TextStyle(fontStyle: FontStyle.italic, fontSize: 19, color: Colors.white),
-        textAlign: TextAlign.center,
+Column _noDataFoundContainer(bool isEmpty) {
+  return Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Opacity(
+        opacity: 0.5,
+        child: Image.asset(
+          'assets/images/no-data-found-white.png',
+          height: 90,
+        ),
       ),
-    )
-  ],
-);
-// ListView _listViewBuilder = ListView.builder(
-//   itemCount: 0,
-//   itemBuilder: (context, index) {
-//     return Padding(
-//       padding: const EdgeInsets.symmetric(vertical: 3.0),
-//       // Adds spacing between tiles
-//       child: Container(
-//         decoration: BoxDecoration(
-//           color: Colors.white10,
-//           // Background color for each tile
-//           borderRadius: BorderRadius.circular(5),
-//         ),
-//         child: ListTile(
-//           contentPadding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 6.0),
-//           // Inner padding for text
-//           title: Text(
-//             'Item $index',
-//             style: const TextStyle(
-//               color: Colors.white, // Text color
-//               fontSize: 16,
-//               fontWeight: FontWeight.bold, // Optional: Make the text bold
-//             ),
-//           ),
-//           onTap: () {
-//             // Handle tap (optional)
-//           },
-//         ),
-//       ),
-//     );
-//   },
-// );
+      const SizedBox(height: 8),
+      Opacity(
+        opacity: 0.5,
+        child: Text(
+          isEmpty ? 'Try adding some data by clicking on the \'plus\' icon below.' : 'No results found. Try searching for another term.',
+          style: const TextStyle(
+            fontStyle: FontStyle.italic,
+            fontSize: 19,
+            color: Colors.white,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    ],
+  );
+}
 
-// ValueListenableBuilder _valueListenableBuilder = ValueListenableBuilder<Box>(
-//   valueListenable: Hive.box('sdData').listenable(),
-//   builder: (context, box, _) {
-//     // Update dataCount dynamically when data changes
-//     WidgetsBinding.instance.addPostFrameCallback((_) {
-//       setState(() {
-//         dataCount = box.length; // Update dataCount based on the box size
-//       });
-//     });
+void _confirmAndDeleteEntry(Map entry, BuildContext context) async {
+  await showOkDialog(
+    context: context,
+    title: 'Delete Entry',
+    message: 'Are you sure you want to delete this entry? This will also delete it from the backup location and JSON backup file.',
+    onOkPressed: () async {
+      final box = Hive.box('sdData');
+      final entryKey = box.keys.firstWhere((key) => box.get(key) == entry);
 
-//     final entries = box.values.toList(); // Fetch all data from the box
+      // Delete from local Hive database
+      await box.delete(entryKey);
 
-//     // Display ListView with fetched data
-//     return ListView.builder(
-//       itemCount: entries.length,
-//       itemBuilder: (context, index) {
-//         final entry = entries[index];
-//         return ListTile(
-//           // leading: entry['imagePath'] != null
-//           //     ? Image.file(
-//           //         File(entry['imagePath']),
-//           //         width: 50,
-//           //         height: 50,
-//           //         fit: BoxFit.cover,
-//           //       )
-//           //     : const Icon(Icons.image_not_supported),
-//           title: Text(entry['text'] ?? 'No Title'),
-//           subtitle: Text(entry['imagePath'] ?? 'No Image Path'),
-//           trailing: IconButton(
-//             icon: const Icon(Icons.delete, color: Colors.red),
-//             onPressed: () => null,
-//           ),
-//           onTap: () {
-//             null;
-//           },
-//         );
-//       },
-//     );
-//   },
-// );
+      // Delete local image file
+      if (entry['imagePath'] != null) {
+        final imageFile = File(entry['imagePath']);
+        if (await imageFile.exists()) {
+          await imageFile.delete();
+        }
+      }
+
+      try {
+        // Get backup directory and JSON file path
+        final paths = await getBackupDirectoryAndJsonFile();
+        final String backupDirectory = paths['backupDirectory']!;
+        final String jsonFilePath = paths['jsonFilePath']!;
+
+        // Delete the image from the backup directory
+        final String backupImagePath = '$backupDirectory/${entry['imagePath']?.split('/').last}';
+        final backupImageFile = File(backupImagePath);
+        if (await backupImageFile.exists()) {
+          await backupImageFile.delete();
+        }
+
+        // Update the JSON file by removing the entry
+        await _removeEntryFromJsonFile(jsonFilePath, entry);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete entry from backup. Error: $e')),
+        );
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Entry deleted successfully from all locations!')),
+      );
+    },
+    onCancelPressed: () {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Delete operation canceled.')),
+      );
+    },
+  );
+}
+
+/// Helper to get the backup image path
+Future<String> getBackupImagePath(String? localImagePath) async {
+  if (localImagePath == null) {
+    throw Exception('Local image path is null');
+  }
+
+  // Replace the local image directory with the backup directory
+  // Example: If images are stored in '/data/user/0/com.example.steno_dictionary/images',
+  // replace it with the backup directory path
+  final String backupDirectory = await getBackupDirectoryPath();
+  final fileName = localImagePath.split('/').last;
+  return '$backupDirectory/$fileName';
+}
+
+/// Mock implementation of backup directory path
+Future<Map<String, String>> getBackupDirectoryAndJsonFile() async {
+  // Open directory picker to select the backup directory
+  String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+
+  if (selectedDirectory == null) {
+    throw Exception("Backup directory selection was canceled.");
+  }
+
+  // Validate if the directory contains the `.json` file
+  final String jsonFilePath = '$selectedDirectory/Data_Backup.json';
+  final File jsonFile = File(jsonFilePath);
+
+  if (!await jsonFile.exists()) {
+    throw Exception("Backup JSON file not found in the selected directory.");
+  }
+
+  return {
+    "backupDirectory": selectedDirectory,
+    "jsonFilePath": jsonFilePath,
+  };
+}
+
+/// Helper to remove an entry from the JSON backup file
+Future<void> _removeEntryFromJsonFile(String backupJsonPath, Map entry) async {
+  final File jsonFile = File(backupJsonPath);
+
+  if (await jsonFile.exists()) {
+    final String jsonContent = await jsonFile.readAsString();
+
+    // Decode JSON and remove the specific entry
+    final Map<String, dynamic> jsonData = jsonDecode(jsonContent);
+    final String entryKey = jsonData.keys.firstWhere(
+      (key) => jsonData[key]['text'] == entry['text'] && jsonData[key]['imagePath'] == entry['imagePath'],
+      orElse: () => '',
+    );
+
+    if (entryKey.isNotEmpty) {
+      jsonData.remove(entryKey);
+
+      // Write updated JSON back to the file
+      await jsonFile.writeAsString(jsonEncode(jsonData));
+    }
+  }
+}
+
+/// Mock implementation of backup directory path
+Future<String> getBackupDirectoryPath() async {
+  // Replace with the logic for your actual backup directory
+  String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+  return selectedDirectory!;
+}

@@ -150,7 +150,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: Padding(
                   padding: EdgeInsets.only(bottom: 5, left: 0, right: 0, top: 0),
                   child: Text(
-                    'StenoMate  [0.0.1]',
+                    'StenoMate  [0.1.1]',
                     textAlign: TextAlign.center,
                   ),
                 ),

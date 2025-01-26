@@ -3,9 +3,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:steno_dictionary/common_methods.dart';
-import 'package:steno_dictionary/database/backup_helper.dart';
 import 'package:steno_dictionary/database/database_helper.dart';
 
 class MutableBool {
